@@ -14,13 +14,14 @@ void setupServiceLocator() {
 
   // Network
   final dio = Dio(BaseOptions(
-    baseUrl: 'http://10.0.2.2:5145/api',
-    connectTimeout: const Duration(seconds: 5),
-    receiveTimeout: const Duration(seconds: 3),
+    baseUrl: 'http://10.0.2.2:52888/api',
+    connectTimeout: const Duration(seconds: 15),
+    receiveTimeout: const Duration(seconds: 15),
     headers: {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
     },
+    validateStatus: (status) => true, // Permite ver errores 4xx y 5xx sin lanzar excepción
   ));
 
   dio.interceptors.add(AuthInterceptor(getIt<StorageService>()));
