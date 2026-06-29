@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:tfmoviles2/iam/domain/repositories/auth_repository.dart';
+import 'package:tfmoviles2/service_locator.dart';
 import 'package:tfmoviles2/shared/presentation/design/app_colors.dart';
 import 'package:tfmoviles2/shared/presentation/components/custom_text_field.dart';
 import 'package:tfmoviles2/iam/presentation/views/widgets/profile_image_picker.dart';
@@ -13,11 +15,57 @@ class RegisterView extends StatefulWidget {
 
 class _RegisterViewState extends State<RegisterView> {
   XFile? _profileImage;
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  bool _isLoading = false;
 
   void _onImageSelected(XFile? image) {
     setState(() {
       _profileImage = image;
     });
+  }
+
+  Future<void> _handleRegister() async {
+    if (_passwordController.text != _confirmPasswordController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Las contraseñas no coinciden')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    final authRepository = getIt<AuthRepository>();
+    final success = await authRepository.register(
+      name: _nameController.text.trim(),
+      email: _emailController.text.trim(),
+      phone: _phoneController.text.trim(),
+      password: _passwordController.text.trim(),
+    );
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    if (success) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Registro exitoso. Ahora puedes iniciar sesión.')),
+        );
+        Navigator.pop(context);
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error en el registro')),
+        );
+      }
+    }
   }
 
   @override
@@ -47,7 +95,6 @@ class _RegisterViewState extends State<RegisterView> {
             child: Column(
               children: [
                 const SizedBox(height: 20),
-                // Logo Icon
                 Center(
                   child: Container(
                     width: 100,
@@ -88,45 +135,40 @@ class _RegisterViewState extends State<RegisterView> {
                 ),
                 const SizedBox(height: 32),
                 
-                // Profile Image Picker Component
                 ProfileImagePicker(onImageSelected: _onImageSelected),
                 
                 const SizedBox(height: 24),
-                const CustomTextField(label: 'Nombre completo', isLight: true),
+                CustomTextField(label: 'Nombre completo', isLight: true, controller: _nameController),
                 const SizedBox(height: 16),
-                const CustomTextField(label: 'Correo electrónico', isLight: true),
+                CustomTextField(label: 'Correo electrónico', isLight: true, controller: _emailController),
                 const SizedBox(height: 16),
-                const CustomTextField(label: 'Teléfono', isLight: true),
+                CustomTextField(label: 'Teléfono', isLight: true, controller: _phoneController),
                 const SizedBox(height: 16),
-                const CustomTextField(label: 'Contraseña', isPassword: true, isLight: true),
+                CustomTextField(label: 'Contraseña', isPassword: true, isLight: true, controller: _passwordController),
                 const SizedBox(height: 16),
-                const CustomTextField(label: 'Confirmar contraseña', isPassword: true, isLight: true),
+                CustomTextField(label: 'Confirmar contraseña', isPassword: true, isLight: true, controller: _confirmPasswordController),
                 const SizedBox(height: 32),
-                // Registrarme Button
                 SizedBox(
                   width: double.infinity,
                   height: 60,
                   child: ElevatedButton(
-                    onPressed: () {
-                      // Logic for registration
-                      if (_profileImage != null) {
-                        debugPrint('Registering with image: \${_profileImage!.name}');
-                      }
-                    },
+                    onPressed: _isLoading ? null : _handleRegister,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF2C3E50),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text(
-                      'Registrarme',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    child: _isLoading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text(
+                            'Registrarme',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -148,5 +190,15 @@ class _RegisterViewState extends State<RegisterView> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
   }
 }

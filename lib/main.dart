@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:tfmoviles2/iam/presentation/views/login_view.dart';
 import 'package:tfmoviles2/shared/presentation/design/app_colors.dart';
+import 'package:tfmoviles2/service_locator.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  setupServiceLocator();
   runApp(const MyApp());
 }
 

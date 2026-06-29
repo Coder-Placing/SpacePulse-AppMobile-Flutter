@@ -1,10 +1,52 @@
 import 'package:flutter/material.dart';
+import 'package:tfmoviles2/iam/domain/repositories/auth_repository.dart';
+import 'package:tfmoviles2/service_locator.dart';
 import 'package:tfmoviles2/shared/presentation/design/app_colors.dart';
 import 'package:tfmoviles2/shared/presentation/components/custom_text_field.dart';
 import 'package:tfmoviles2/iam/presentation/views/register_view.dart';
 
-class LoginView extends StatelessWidget {
+class LoginView extends StatefulWidget {
   const LoginView({super.key});
+
+  @override
+  State<LoginView> createState() => _LoginViewState();
+}
+
+class _LoginViewState extends State<LoginView> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _isLoading = false;
+
+  Future<void> _handleLogin() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    final authRepository = getIt<AuthRepository>();
+    final user = await authRepository.login(
+      _emailController.text.trim(),
+      _passwordController.text.trim(),
+    );
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    if (user != null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Login exitoso')),
+        );
+        // Navegar a la pantalla principal aquí
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error en el login')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +59,6 @@ class LoginView extends StatelessWidget {
             child: Column(
               children: [
                 const SizedBox(height: 60),
-                // Logo Icon as seen in the image
                 Center(
                   child: Container(
                     width: 120,
@@ -58,9 +99,16 @@ class LoginView extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 60),
-                const CustomTextField(label: 'Correo'),
+                CustomTextField(
+                  label: 'Correo',
+                  controller: _emailController,
+                ),
                 const SizedBox(height: 20),
-                const CustomTextField(label: 'Contraseña', isPassword: true),
+                CustomTextField(
+                  label: 'Contraseña',
+                  isPassword: true,
+                  controller: _passwordController,
+                ),
                 const SizedBox(height: 12),
                 Align(
                   alignment: Alignment.centerLeft,
@@ -81,7 +129,7 @@ class LoginView extends StatelessWidget {
                   width: double.infinity,
                   height: 60,
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: _isLoading ? null : _handleLogin,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF243447),
                       shape: RoundedRectangleBorder(
@@ -89,14 +137,16 @@ class LoginView extends StatelessWidget {
                       ),
                       elevation: 0,
                     ),
-                    child: const Text(
-                      'Iniciar sesión',
-                      style: TextStyle(
-                        color: AppColors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    child: _isLoading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text(
+                            'Iniciar sesión',
+                            style: TextStyle(
+                              color: AppColors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
                 ),
                 const SizedBox(height: 40),
@@ -127,5 +177,12 @@ class LoginView extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 }
