@@ -2,6 +2,9 @@ import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
 import 'package:tfmoviles2/iam/domain/repositories/auth_repository.dart';
 import 'package:tfmoviles2/iam/infrastructure/repositories/auth_repository_impl.dart';
+import 'package:tfmoviles2/spaces/domain/repositories/space_repository.dart';
+import 'package:tfmoviles2/spaces/infrastructure/repositories/space_repository_impl.dart';
+
 import 'package:tfmoviles2/shared/domain/services/storage_service.dart';
 import 'package:tfmoviles2/shared/infrastructure/network/auth_interceptor.dart';
 import 'package:tfmoviles2/shared/infrastructure/services/secure_storage_service.dart';
@@ -34,5 +37,9 @@ void setupServiceLocator() {
   getIt.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl(
         dio: getIt<Dio>(),
         storageService: getIt<StorageService>(),
+      ));
+
+  getIt.registerLazySingleton<SpaceRepository>(() => SpaceRepositoryImpl(
+        dio: getIt<Dio>(),
       ));
 }
