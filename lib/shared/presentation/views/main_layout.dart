@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../../spaces/presentation/views/spaces_view.dart';
-// import '../../../home/presentation/views/home_view.dart'; // To be created
+import '../../../home/presentation/views/home_view.dart';
 // import '../../../alerts/presentation/views/alerts_view.dart'; // To be created
 
 // 1. IMPORTAMOS NUESTRA VISTA DEFINITIVA DE IOT
 import '../../../iot/presentation/views/iot_view.dart';
 
-// import '../../../profile/presentation/views/profile_view.dart'; // To be created
+import '../../../profile/presentation/views/profile_view.dart';
 
 class MainLayout extends StatefulWidget {
   const MainLayout({super.key});
@@ -16,17 +16,17 @@ class MainLayout extends StatefulWidget {
 }
 
 class _MainLayoutState extends State<MainLayout> {
-  int _currentIndex = 1; // 1 to show Spaces by default for this test, later 0 for Home
+  int _currentIndex = 0; // Default to Home
 
   final List<Widget> _pages = [
-    const Center(child: Text('Home')), // Placeholder for Home
+    const HomeView(),
     const SpacesView(),
     const Center(child: Text('Alertas')), // Placeholder for Alertas
 
     // 2. COLOCAMOS EL IOTVIEW AQUÍ (En la posición de índice 3)
     const IotView(),
 
-    const Center(child: Text('Mi Perfil')), // Placeholder for Profile
+    const ProfileView(),
   ];
 
   @override
