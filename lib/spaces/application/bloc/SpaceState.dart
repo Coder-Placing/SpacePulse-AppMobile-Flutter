@@ -8,8 +8,9 @@ class SpaceLoadingState extends SpaceState {}
 
 class SpaceLoadedState extends SpaceState {
   final List<Space> spaces;
+  final bool isMySpaces;
 
-  SpaceLoadedState({required this.spaces});
+  SpaceLoadedState({required this.spaces, this.isMySpaces = false});
 }
 
 class SpaceErrorState extends SpaceState {
