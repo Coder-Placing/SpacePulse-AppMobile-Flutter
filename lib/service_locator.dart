@@ -16,6 +16,10 @@ import 'package:tfmoviles2/iot/domain/repositories/iot_repository.dart';
 import 'package:tfmoviles2/iot/infrastructure/repositories/iot_repository_impl.dart';
 import 'package:tfmoviles2/iot/application/bloc/IotBloc.dart';
 
+import 'package:tfmoviles2/notifications/application/bloc/notification_bloc.dart';
+import 'package:tfmoviles2/notifications/domain/repositories/notification_repository.dart';
+import 'package:tfmoviles2/notifications/infrastructure/repositories/notification_repository_impl.dart';
+
 final getIt = GetIt.instance;
 
 void setupServiceLocator() {
@@ -57,4 +61,14 @@ void setupServiceLocator() {
   getIt.registerFactory<IotBloc>(() => IotBloc(
     iotRepository: getIt<IotRepository>(),
   ));
+
+  getIt.registerLazySingleton<NotificationRepository>(() => NotificationRepositoryImpl(
+      dio: getIt<Dio>(),
+    ),
+  );
+
+  getIt.registerFactory<NotificationBloc>(() => NotificationBloc(
+      notificationRepository: getIt<NotificationRepository>(),
+    ),
+  );
 }
