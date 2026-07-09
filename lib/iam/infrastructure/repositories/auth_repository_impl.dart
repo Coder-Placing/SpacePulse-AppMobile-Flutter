@@ -34,10 +34,21 @@ class AuthRepositoryImpl implements AuthRepository {
           await storageService.saveToken(token);
         }
 
+        final userEmail = data['email'] ?? email;
+        final userName = data['fullName'];
+        final userPhone = data['phone']; // En caso de que venga
+
+        await storageService.saveUserData(
+          name: userName,
+          email: userEmail,
+          phone: userPhone,
+        );
+
         return User(
           id: data['userId']?.toString() ?? '',
-          email: data['email'] ?? email,
-          name: data['fullName'],
+          email: userEmail,
+          name: userName,
+          phone: userPhone,
         );
       }
 

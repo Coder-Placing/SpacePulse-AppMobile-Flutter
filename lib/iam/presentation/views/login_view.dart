@@ -4,6 +4,7 @@ import 'package:tfmoviles2/service_locator.dart';
 import 'package:tfmoviles2/shared/presentation/design/app_colors.dart';
 import 'package:tfmoviles2/shared/presentation/components/custom_text_field.dart';
 import 'package:tfmoviles2/iam/presentation/views/register_view.dart';
+import 'package:tfmoviles2/shared/presentation/views/main_layout.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -37,7 +38,10 @@ class _LoginViewState extends State<LoginView> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Login exitoso')),
         );
-        // Navegar a la pantalla principal aquí
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const MainLayout()),
+        );
       }
     } else {
       if (mounted) {
