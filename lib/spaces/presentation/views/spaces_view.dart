@@ -5,6 +5,7 @@ import 'package:tfmoviles2/shared/presentation/design/app_colors.dart';
 import 'package:tfmoviles2/spaces/application/bloc/SpaceBloc.dart';
 import 'package:tfmoviles2/spaces/domain/models/space.dart';
 import 'package:tfmoviles2/spaces/domain/repositories/space_repository.dart';
+import 'package:tfmoviles2/tasks/presentation/views/tasks_view.dart';
 
 class SpacesView extends StatelessWidget {
   const SpacesView({super.key});
@@ -30,22 +31,45 @@ class SpacesContentView extends StatefulWidget {
 class _SpacesContentViewState extends State<SpacesContentView> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Espacios Disponibles'),
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
         backgroundColor: AppColors.background,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              context.read<SpaceBloc>().add(FetchSpacesEvent());
+        appBar: AppBar(
+          title: const Text('Espacios'),
+          backgroundColor: AppColors.background,
+          elevation: 0,
+          bottom: TabBar(
+            indicatorColor: AppColors.primaryButton,
+            labelColor: AppColors.primaryButton,
+            unselectedLabelColor: AppColors.secondaryText,
+            onTap: (index) {
+              if (index == 0) {
+                context.read<SpaceBloc>().add(FetchSpacesEvent());
+              } else {
+                context.read<SpaceBloc>().add(FetchMySpacesEvent());
+              }
             },
+            tabs: const [
+              Tab(text: 'Disponibles'),
+              Tab(text: 'Mis Espacios'),
+            ],
           ),
-        ],
-      ),
-      body: BlocConsumer<SpaceBloc, SpaceState>(
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: () {
+                final tabController = DefaultTabController.of(context);
+                if (tabController.index == 0) {
+                  context.read<SpaceBloc>().add(FetchSpacesEvent());
+                } else {
+                  context.read<SpaceBloc>().add(FetchMySpacesEvent());
+                }
+              },
+            ),
+          ],
+        ),
+        body: BlocConsumer<SpaceBloc, SpaceState>(
         listener: (context, state) {
           if (state is SpaceActionSuccessState) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -111,7 +135,7 @@ class _SpacesContentViewState extends State<SpacesContentView> {
                   return SpaceCard(
                     space: space,
                     onViewDetails: () {
-                      _showSpaceDetailsModal(context, space);
+                      _showSpaceDetailsModal(context, space, state.isMySpaces);
                     },
                   );
                 },
@@ -121,10 +145,11 @@ class _SpacesContentViewState extends State<SpacesContentView> {
           return const SizedBox.shrink();
         },
       ),
+      ),
     );
   }
 
-  void _showSpaceDetailsModal(BuildContext context, Space space) {
+  void _showSpaceDetailsModal(BuildContext context, Space space, bool isMySpaces) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -190,38 +215,55 @@ class _SpacesContentViewState extends State<SpacesContentView> {
                 ],
               ),
               const SizedBox(height: 32),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Colors.redAccent),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              if (!isMySpaces)
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Colors.redAccent),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        child: const Text('Rechazar', style: TextStyle(color: Colors.redAccent)),
                       ),
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      child: const Text('Rechazar', style: TextStyle(color: Colors.redAccent)),
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        onPressed: () {
+                          context.read<SpaceBloc>().add(AcceptSpaceEvent(spaceId: space.id));
+                          Navigator.pop(context);
+                        },
+                        child: const Text('Aceptar', style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold)),
                       ),
-                      onPressed: () {
-                        context.read<SpaceBloc>().add(AcceptSpaceEvent(spaceId: space.id));
-                        Navigator.pop(context);
-                      },
-                      child: const Text('Aceptar', style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold)),
                     ),
+                  ],
+                )
+              else
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryButton,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => TasksView(space: space)));
+                    },
+                    child: const Text('Ver Tareas', style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold)),
                   ),
-                ],
-              ),
+                ),
               const SizedBox(height: 32),
             ],
           ),

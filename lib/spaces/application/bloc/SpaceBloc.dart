@@ -29,7 +29,7 @@ class SpaceBloc extends Bloc<SpaceEvent, SpaceState> {
     emit(SpaceLoadingState());
     try {
       final List<Space> spaces = await spaceRepository.getMySpaces();
-      emit(SpaceLoadedState(spaces: spaces));
+      emit(SpaceLoadedState(spaces: spaces, isMySpaces: true));
     } catch (e) {
       emit(SpaceErrorState(message: e.toString()));
     }
