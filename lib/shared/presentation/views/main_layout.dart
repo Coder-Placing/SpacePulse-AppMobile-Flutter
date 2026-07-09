@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../spaces/presentation/views/spaces_view.dart';
 import '../../../home/presentation/views/home_view.dart';
-// import '../../../alerts/presentation/views/alerts_view.dart'; // To be created
+import '../../../notifications/presentation/views/notifications_view.dart';
 
 // 1. IMPORTAMOS NUESTRA VISTA DEFINITIVA DE IOT
 import '../../../iot/presentation/views/iot_view.dart';
@@ -21,7 +21,7 @@ class _MainLayoutState extends State<MainLayout> {
   final List<Widget> _pages = [
     const HomeView(),
     const SpacesView(),
-    const Center(child: Text('Alertas')), // Placeholder for Alertas
+    const NotificationsView(),
 
     // 2. COLOCAMOS EL IOTVIEW AQUÍ (En la posición de índice 3)
     const IotView(),
