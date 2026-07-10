@@ -7,8 +7,6 @@ class IotBloc extends Bloc<IotEvent, IotState> {
   final IotRepository iotRepository;
 
   IotBloc({required this.iotRepository}) : super(IotInitial()) {
-
-    // 1. Cargar dispositivos
     on<LoadDevicesEvent>((event, emit) async {
       emit(IotLoading());
       try {
@@ -19,7 +17,6 @@ class IotBloc extends Bloc<IotEvent, IotState> {
       }
     });
 
-    // 2. Agregar dispositivo
     on<AddDeviceEvent>((event, emit) async {
       emit(IotLoading());
       try {
@@ -27,8 +24,8 @@ class IotBloc extends Bloc<IotEvent, IotState> {
           spaceId: event.spaceId,
           name: event.name,
           type: event.type,
+          serialNumber: event.serialNumber,
         );
-        // Despues de crear, volvemos a cargar la lista para que aparezca el nuevo
         final devices = await iotRepository.getDevicesBySpace(event.spaceId);
         emit(IotDevicesLoaded(devices));
       } catch (e) {
@@ -36,12 +33,29 @@ class IotBloc extends Bloc<IotEvent, IotState> {
       }
     });
 
-    // 3. Eliminar dispositivo
+    on<UpdateDeviceEvent>((event, emit) async {
+      emit(IotLoading());
+      try {
+        await iotRepository.updateDevice(
+          deviceId: event.deviceId,
+          name: event.name,
+          serialNumber: event.serialNumber,
+        );
+        
+        if (event.spaceId != null) {
+          add(LoadDevicesEvent(event.spaceId!));
+        } else {
+          add(LoadTelemetryEvent(event.deviceId));
+        }
+      } catch (e) {
+        emit(IotError(e.toString()));
+      }
+    });
+
     on<DeleteDeviceEvent>((event, emit) async {
       emit(IotLoading());
       try {
         await iotRepository.deleteDevice(event.deviceId);
-        // Volvemos a cargar la lista actualizada
         final devices = await iotRepository.getDevicesBySpace(event.spaceId);
         emit(IotDevicesLoaded(devices));
       } catch (e) {
@@ -49,12 +63,20 @@ class IotBloc extends Bloc<IotEvent, IotState> {
       }
     });
 
-    // 4. Ver datos en vivo (Telemetría)
     on<LoadTelemetryEvent>((event, emit) async {
       emit(IotLoading());
       try {
         final records = await iotRepository.getDeviceTelemetry(event.deviceId);
         emit(IotTelemetryLoaded(records));
+      } catch (e) {
+        emit(IotError(e.toString()));
+      }
+    });
+
+    on<ToggleDevicePowerEvent>((event, emit) async {
+      try {
+        await iotRepository.toggleDevicePower(event.deviceId);
+        add(LoadTelemetryEvent(event.deviceId));
       } catch (e) {
         emit(IotError(e.toString()));
       }

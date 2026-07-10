@@ -15,7 +15,7 @@ class SpacesView extends StatelessWidget {
     return BlocProvider(
       create: (_) => SpaceBloc(
         spaceRepository: getIt<SpaceRepository>(),
-      )..add(FetchSpacesEvent()), // Default fetching spaces for remodeler
+      )..add(FetchSpacesEvent()),
       child: const SpacesContentView(),
     );
   }
@@ -165,18 +165,36 @@ class _SpacesContentViewState extends State<SpacesContentView> {
             right: 20,
             top: 24,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                space.title,
-                style: const TextStyle(
-                  color: AppColors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (space.images.isNotEmpty)
+                  Container(
+                    width: double.infinity,
+                    height: 200,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Image.network(
+                        space.images.first,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          color: AppColors.cardBackground,
+                          child: const Icon(Icons.broken_image, color: AppColors.secondaryText, size: 50),
+                        ),
+                      ),
+                    ),
+                  ),
+                Text(
+                  space.title,
+                  style: const TextStyle(
+                    color: AppColors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
               const SizedBox(height: 8),
               Row(
                 children: [
@@ -201,7 +219,15 @@ class _SpacesContentViewState extends State<SpacesContentView> {
                     children: [
                       const Text('Presupuesto', style: TextStyle(color: AppColors.secondaryText)),
                       Text('${space.currency} ${space.estimatedBudget.toStringAsFixed(2)}',
-                          style: const TextStyle(color: AppColors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                          style: const TextStyle(color: AppColors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Precio Final', style: TextStyle(color: AppColors.secondaryText)),
+                      Text('${space.currency} ${space.endingPricing.toStringAsFixed(2)}',
+                          style: const TextStyle(color: AppColors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                     ],
                   ),
                   Column(
@@ -209,7 +235,7 @@ class _SpacesContentViewState extends State<SpacesContentView> {
                     children: [
                       const Text('Área', style: TextStyle(color: AppColors.secondaryText)),
                       Text('${space.dimensionsSquareMeters} m²',
-                          style: const TextStyle(color: AppColors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                          style: const TextStyle(color: AppColors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ],
@@ -249,24 +275,53 @@ class _SpacesContentViewState extends State<SpacesContentView> {
                   ],
                 )
               else
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryButton,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                Column(
+                  children: [
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryButton,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Navigator.push(context, MaterialPageRoute(builder: (_) => TasksView(space: space)));
+                        },
+                        child: const Text('Ver Tareas', style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold)),
+                      ),
                     ),
-                    onPressed: () {
-                      Navigator.pop(context);
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => TasksView(space: space)));
-                    },
-                    child: const Text('Ver Tareas', style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold)),
-                  ),
+                    if (space.status.toUpperCase() == 'COMPLETED' || space.status.toUpperCase() == 'FINISHED')
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.amber[800],
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                            onPressed: () {
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('¡Cobro realizado con éxito! El pago ha sido procesado.'),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            },
+                            child: const Text('Cobrar', style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold)),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               const SizedBox(height: 32),
             ],
           ),
+          )
         );
       },
     );
@@ -289,108 +344,129 @@ class SpaceCard extends StatelessWidget {
       color: AppColors.cardBackground,
       margin: const EdgeInsets.only(bottom: 16),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    space.title,
-                    style: const TextStyle(
-                      color: AppColors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (space.images.isNotEmpty)
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              child: Image.network(
+                space.images.first,
+                height: 180,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  height: 180,
+                  width: double.infinity,
+                  color: Colors.black,
+                  child: const Icon(Icons.image_not_supported, color: AppColors.secondaryText, size: 50),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: _getStatusColor(space.status).withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: _getStatusColor(space.status)),
-                  ),
-                  child: Text(
-                    space.status,
-                    style: TextStyle(color: _getStatusColor(space.status), fontSize: 12),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                const Icon(Icons.location_on, color: AppColors.secondaryText, size: 16),
-                const SizedBox(width: 4),
-                Text(
-                  space.location,
-                  style: const TextStyle(color: AppColors.secondaryText),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              space.description,
-              style: const TextStyle(color: AppColors.white),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Presupuesto', style: TextStyle(color: AppColors.secondaryText, fontSize: 12)),
-                    Text(
-                      '${space.currency} ${space.estimatedBudget.toStringAsFixed(2)}',
-                      style: const TextStyle(color: AppColors.white, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Tipo', style: TextStyle(color: AppColors.secondaryText, fontSize: 12)),
-                    Text(
-                      space.spaceType,
-                      style: const TextStyle(color: AppColors.white, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Área', style: TextStyle(color: AppColors.secondaryText, fontSize: 12)),
-                    Text(
-                      '${space.dimensionsSquareMeters} m²',
-                      style: const TextStyle(color: AppColors.white, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryButton,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                onPressed: onViewDetails,
-                child: const Text('Ver Detalles', style: TextStyle(color: AppColors.white)),
               ),
-            )
-          ],
-        ),
+            ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        space.title,
+                        style: const TextStyle(
+                          color: AppColors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: _getStatusColor(space.status).withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: _getStatusColor(space.status)),
+                      ),
+                      child: Text(
+                        space.status,
+                        style: TextStyle(color: _getStatusColor(space.status), fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.location_on, color: AppColors.secondaryText, size: 16),
+                    const SizedBox(width: 4),
+                    Text(
+                      space.location,
+                      style: const TextStyle(color: AppColors.secondaryText),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  space.description,
+                  style: const TextStyle(color: AppColors.white),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Presupuesto', style: TextStyle(color: AppColors.secondaryText, fontSize: 12)),
+                        Text(
+                          '${space.currency} ${space.estimatedBudget.toStringAsFixed(2)}',
+                          style: const TextStyle(color: AppColors.white, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Precio Final', style: TextStyle(color: AppColors.secondaryText, fontSize: 12)),
+                        Text(
+                          '${space.currency} ${space.endingPricing.toStringAsFixed(2)}',
+                          style: const TextStyle(color: AppColors.white, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Área', style: TextStyle(color: AppColors.secondaryText, fontSize: 12)),
+                        Text(
+                          '${space.dimensionsSquareMeters} m²',
+                          style: const TextStyle(color: AppColors.white, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryButton,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    onPressed: onViewDetails,
+                    child: const Text('Ver Detalles', style: TextStyle(color: AppColors.white)),
+                  ),
+                )
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -400,6 +476,7 @@ class SpaceCard extends StatelessWidget {
       case 'PUBLISHED':
         return Colors.green;
       case 'COMPLETED':
+      case 'FINISHED':
         return Colors.blue;
       case 'CANCELED':
         return Colors.red;

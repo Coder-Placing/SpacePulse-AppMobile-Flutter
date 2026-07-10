@@ -1,9 +1,10 @@
 class IotDevice {
   final int id;
-  final String name; // ej: "Sensor de Pared Norte"
-  final String type; // ej: "Temperature", "Humidity", "Motion"
-  final String status; // ej: "Active", "Offline"
+  final String name;
+  final String type;
+  final String status;
   final int spaceId;
+  final String serialNumber;
 
   IotDevice({
     required this.id,
@@ -11,9 +12,9 @@ class IotDevice {
     required this.type,
     required this.status,
     required this.spaceId,
+    required this.serialNumber,
   });
 
-  // Este factory es vital para que Dio convierta el JSON del Swagger a nuestro objeto
   factory IotDevice.fromJson(Map<String, dynamic> json) {
     return IotDevice(
       id: json['id'] ?? 0,
@@ -21,6 +22,7 @@ class IotDevice {
       type: json['type'] ?? '',
       status: json['status'] ?? 'Offline',
       spaceId: json['spaceId'] ?? 0,
+      serialNumber: json['serialNumber'] ?? '',
     );
   }
 
@@ -31,6 +33,7 @@ class IotDevice {
       'type': type,
       'status': status,
       'spaceId': spaceId,
+      'serialNumber': serialNumber,
     };
   }
 }

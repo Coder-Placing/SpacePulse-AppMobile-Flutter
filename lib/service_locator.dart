@@ -11,6 +11,7 @@ import 'package:tfmoviles2/tasks/infrastructure/repositories/task_repository_imp
 import 'package:tfmoviles2/shared/domain/services/storage_service.dart';
 import 'package:tfmoviles2/shared/infrastructure/network/auth_interceptor.dart';
 import 'package:tfmoviles2/shared/infrastructure/services/secure_storage_service.dart';
+import 'package:tfmoviles2/shared/infrastructure/services/imgbb_service.dart';
 
 import 'package:tfmoviles2/iot/domain/repositories/iot_repository.dart';
 import 'package:tfmoviles2/iot/infrastructure/repositories/iot_repository_impl.dart';
@@ -24,9 +25,10 @@ final getIt = GetIt.instance;
 
 void setupServiceLocator() {
   getIt.registerLazySingleton<StorageService>(() => SecureStorageService());
+  getIt.registerLazySingleton<ImgBBService>(() => ImgBBService());
 
   final dio = Dio(BaseOptions(
-    baseUrl: 'http://10.0.2.2:52888/api',
+    baseUrl: 'https://backend-0305.onrender.com/api',
     connectTimeout: const Duration(seconds: 15),
     receiveTimeout: const Duration(seconds: 15),
     headers: {
@@ -44,6 +46,7 @@ void setupServiceLocator() {
   getIt.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl(
     dio: getIt<Dio>(),
     storageService: getIt<StorageService>(),
+    imgBBService: getIt<ImgBBService>(),
   ));
 
   getIt.registerLazySingleton<SpaceRepository>(() => SpaceRepositoryImpl(

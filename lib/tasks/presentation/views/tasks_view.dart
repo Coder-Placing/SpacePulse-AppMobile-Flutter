@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:tfmoviles2/service_locator.dart';
+import 'package:tfmoviles2/shared/infrastructure/services/imgbb_service.dart';
 import 'package:tfmoviles2/shared/presentation/design/app_colors.dart';
 import 'package:tfmoviles2/spaces/domain/models/space.dart';
 import 'package:tfmoviles2/tasks/application/bloc/task_bloc.dart';
@@ -123,103 +125,119 @@ class _TasksContentViewState extends State<TasksContentView> {
       color: AppColors.cardBackground,
       margin: const EdgeInsets.only(bottom: 16),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (task.photoUrl != null && task.photoUrl!.isNotEmpty && task.photoUrl != "string")
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              child: Image.network(
+                task.photoUrl!,
+                height: 150,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+              ),
+            ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Text(
-                    task.title,
-                    style: const TextStyle(color: AppColors.white, fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                ),
                 Row(
-                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: _getStatusColor(task.status).withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: _getStatusColor(task.status)),
-                      ),
+                    Expanded(
                       child: Text(
-                        task.status,
-                        style: TextStyle(color: _getStatusColor(task.status), fontSize: 12),
+                        task.title,
+                        style: const TextStyle(color: AppColors.white, fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                     ),
-                    const SizedBox(width: 4),
-                    IconButton(
-                      icon: const Icon(Icons.edit, color: AppColors.secondaryText, size: 20),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      onPressed: () => _showUpdateProgressTaskModal(context, task),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: _getStatusColor(task.status).withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: _getStatusColor(task.status)),
+                          ),
+                          child: Text(
+                            task.status,
+                            style: TextStyle(color: _getStatusColor(task.status), fontSize: 12),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        IconButton(
+                          icon: const Icon(Icons.edit, color: AppColors.secondaryText, size: 20),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          onPressed: () => _showUpdateProgressTaskModal(context, task),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(task.description, style: const TextStyle(color: AppColors.secondaryText)),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                const SizedBox(height: 8),
+                Text(task.description, style: const TextStyle(color: AppColors.secondaryText)),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Precio', style: TextStyle(color: AppColors.secondaryText, fontSize: 12)),
-                    Text('\$${task.price.toStringAsFixed(2)}', style: const TextStyle(color: AppColors.white, fontWeight: FontWeight.bold)),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Precio', style: TextStyle(color: AppColors.secondaryText, fontSize: 12)),
+                        Text('\S\.\/${task.price.toStringAsFixed(2)}', style: const TextStyle(color: AppColors.white, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Colors.redAccent),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        onPressed: () {
+                          context.read<TaskBloc>().add(DeleteTaskEvent(spaceId: widget.space.id, taskId: task.id));
+                        },
+                        child: const Text('Eliminar', style: TextStyle(color: Colors.redAccent)),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        onPressed: () {
+                          final progressData = {
+                            "status": "COMPLETED",
+                            "plannedStartDate": task.plannedStartDate?.toUtc().toIso8601String() ?? DateTime.now().toUtc().toIso8601String(),
+                            "plannedEndDate": task.plannedEndDate?.toUtc().toIso8601String() ?? DateTime.now().toUtc().toIso8601String(),
+                            "price": task.price,
+                          };
+                          context.read<TaskBloc>().add(UpdateTaskProgressEvent(
+                            spaceId: widget.space.id,
+                            taskId: task.id,
+                            progressData: progressData,
+                          ));
+                        },
+                        child: const Text('Completada', style: TextStyle(color: AppColors.white)),
+                      ),
+                    ),
                   ],
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Colors.redAccent),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                    onPressed: () {
-                      context.read<TaskBloc>().add(DeleteTaskEvent(spaceId: widget.space.id, taskId: task.id));
-                    },
-                    child: const Text('Eliminar', style: TextStyle(color: Colors.redAccent)),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                    onPressed: () {
-                      final progressData = {
-                        "status": "COMPLETED",
-                        "plannedStartDate": task.plannedStartDate?.toUtc().toIso8601String() ?? DateTime.now().toUtc().toIso8601String(),
-                        "plannedEndDate": task.plannedEndDate?.toUtc().toIso8601String() ?? DateTime.now().toUtc().toIso8601String(),
-                        "price": task.price,
-                      };
-                      context.read<TaskBloc>().add(UpdateTaskProgressEvent(
-                        spaceId: widget.space.id,
-                        taskId: task.id,
-                        progressData: progressData,
-                      ));
-                    },
-                    child: const Text('Completada', style: TextStyle(color: AppColors.white)),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -239,6 +257,8 @@ class _TasksContentViewState extends State<TasksContentView> {
     final priceController = TextEditingController();
     DateTime? startDate;
     DateTime? endDate;
+    XFile? selectedImage;
+    bool isUploading = false;
 
     showModalBottomSheet(
       context: context,
@@ -258,6 +278,44 @@ class _TasksContentViewState extends State<TasksContentView> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Text('Crear Tarea', style: TextStyle(color: AppColors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 16),
+                    GestureDetector(
+                      onTap: () async {
+                        final picker = ImagePicker();
+                        final image = await picker.pickImage(source: ImageSource.gallery);
+                        if (image != null) {
+                          setStateModal(() => selectedImage = image);
+                        }
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: selectedImage != null ? Colors.green.withOpacity(0.2) : AppColors.cardBackground,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: selectedImage != null ? Colors.green : AppColors.secondaryText.withOpacity(0.3),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              selectedImage != null ? Icons.check_circle : Icons.add_a_photo,
+                              color: selectedImage != null ? Colors.green : AppColors.secondaryText,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              selectedImage != null ? 'Foto seleccionada' : 'Añadir foto de la tarea',
+                              style: TextStyle(
+                                color: selectedImage != null ? Colors.green : AppColors.secondaryText,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 16),
                     TextField(
                       controller: titleController,
@@ -341,25 +399,41 @@ class _TasksContentViewState extends State<TasksContentView> {
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
-                        onPressed: () {
+                        onPressed: isUploading ? null : () async {
                           if (titleController.text.isNotEmpty && startDate != null && endDate != null) {
+                            setStateModal(() => isUploading = true);
+                            
+                            String photoUrl = "string";
+                            if (selectedImage != null) {
+                              final imgBBService = getIt<ImgBBService>();
+                              final uploadedUrl = await imgBBService.uploadImage(selectedImage!.path);
+                              if (uploadedUrl != null) {
+                                photoUrl = uploadedUrl;
+                              }
+                            }
+
                             final taskData = {
                               "spaceId": widget.space.id,
                               "title": titleController.text,
                               "description": descController.text,
-                              "photoUrl": "string",
+                              "photoUrl": photoUrl,
                               "status": "PENDING",
                               "plannedStartDate": startDate!.toUtc().toIso8601String(),
                               "plannedEndDate": endDate!.toUtc().toIso8601String(),
                               "price": double.tryParse(priceController.text) ?? 0,
                             };
-                            context.read<TaskBloc>().add(CreateTaskEvent(spaceId: widget.space.id, taskData: taskData));
-                            Navigator.pop(context);
+                            
+                            if (context.mounted) {
+                              context.read<TaskBloc>().add(CreateTaskEvent(spaceId: widget.space.id, taskData: taskData));
+                              Navigator.pop(context);
+                            }
                           } else {
                             ScaffoldMessenger.of(stateContext).showSnackBar(const SnackBar(content: Text('Complete los campos requeridos')));
                           }
                         },
-                        child: const Text('Crear', style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold)),
+                        child: isUploading 
+                          ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                          : const Text('Crear', style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold)),
                       ),
                     ),
                     const SizedBox(height: 24),

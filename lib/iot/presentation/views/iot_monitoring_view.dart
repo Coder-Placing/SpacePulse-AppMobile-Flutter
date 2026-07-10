@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../application/bloc/IotBloc.dart';
 import '../../application/bloc/IotEvent.dart';
 import '../../application/bloc/IotState.dart';
-// Asegúrate de que esta ruta apunte correctamente a tu service_locator.dart
 import '../../../service_locator.dart';
 class IotDeviceDetailView extends StatelessWidget {
   final int deviceId;
@@ -18,10 +17,9 @@ class IotDeviceDetailView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      // Disparamos el evento para pedir los datos (telemetría) de este sensor en específico
       create: (context) => getIt<IotBloc>()..add(LoadTelemetryEvent(deviceId)),
       child: Scaffold(
-        backgroundColor: const Color(0xFF121212), // Fondo oscuro
+        backgroundColor: const Color(0xFF121212),
         appBar: AppBar(
           title: Text('Telemetría: $deviceName'),
           backgroundColor: const Color(0xFF2C3E50),
@@ -44,7 +42,6 @@ class IotDeviceDetailView extends StatelessWidget {
                 itemCount: records.length,
                 itemBuilder: (context, index) {
                   final record = records[index];
-                  // Formatear la hora
                   final timeStr = "${record.timestamp.hour}:${record.timestamp.minute.toString().padLeft(2, '0')}";
 
                   return Card(
@@ -73,19 +70,18 @@ class IotDeviceDetailView extends StatelessWidget {
 }
 
 class IotMonitoringView extends StatelessWidget {
-  final int spaceId; // Necesitamos saber de qué espacio son los sensores
+  final int spaceId;
 
   const IotMonitoringView({Key? key, required this.spaceId}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      // Al crear el BLoC, disparamos inmediatamente el evento para cargar los sensores
       create: (context) => getIt<IotBloc>()..add(LoadDevicesEvent(spaceId)),
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Monitoreo IoT'),
-          backgroundColor: const Color(0xFF2C3E50), // Tu azul SpacePulse
+          backgroundColor: const Color(0xFF2C3E50),
         ),
         body: BlocBuilder<IotBloc, IotState>(
           builder: (context, state) {
@@ -116,7 +112,6 @@ class IotMonitoringView extends StatelessWidget {
                       trailing: IconButton(
                         icon: const Icon(Icons.delete, color: Colors.redAccent),
                         onPressed: () {
-                          // Dispara el evento de eliminar
                           context.read<IotBloc>().add(
                               DeleteDeviceEvent(deviceId: device.id, spaceId: spaceId)
                           );
@@ -145,11 +140,10 @@ class IotMonitoringView extends StatelessWidget {
               return FloatingActionButton(
                 backgroundColor: const Color(0xFF2C3E50),
                 onPressed: () {
-                  // Mostramos el modal inferior
                   showModalBottomSheet(
                     context: context,
-                    isScrollControlled: true, // Permite que suba si el teclado aparece
-                    backgroundColor: const Color(0xFF1E1E1E), // Tono oscuro que usas en tu app
+                    isScrollControlled: true,
+                    backgroundColor: const Color(0xFF1E1E1E),
                     shape: const RoundedRectangleBorder(
                       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
                     ),
@@ -170,7 +164,6 @@ class IotMonitoringView extends StatelessWidget {
                               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
                             ),
                             const SizedBox(height: 16),
-                            // Simulamos los campos
                             TextFormField(
                               decoration: const InputDecoration(
                                 labelText: 'Nombre del dispositivo (ej. Sensor Cocina)',
@@ -202,9 +195,7 @@ class IotMonitoringView extends StatelessWidget {
                                 padding: const EdgeInsets.symmetric(vertical: 16),
                               ),
                               onPressed: () {
-                                // TODO: Conectar los controladores de texto reales
-                                // context.read<IotBloc>().add(AddDeviceEvent(...));
-                                Navigator.pop(bottomSheetContext); // Cierra el modal
+                                Navigator.pop(bottomSheetContext);
                               },
                               child: const Text('Guardar Sensor', style: TextStyle(color: Colors.white)),
                             ),

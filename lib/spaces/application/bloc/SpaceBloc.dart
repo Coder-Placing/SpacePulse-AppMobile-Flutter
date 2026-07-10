@@ -40,11 +40,9 @@ class SpaceBloc extends Bloc<SpaceEvent, SpaceState> {
     try {
       await spaceRepository.acceptSpace(event.spaceId);
       emit(SpaceActionSuccessState(message: 'Espacio aceptado con éxito'));
-      // Reload spaces
       add(FetchSpacesEvent());
     } catch (e) {
       emit(SpaceErrorState(message: e.toString()));
-      // Fallback reload spaces to remove error screen
       add(FetchSpacesEvent());
     }
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tfmoviles2/shared/presentation/design/app_colors.dart';
 import 'package:tfmoviles2/iam/presentation/views/login_view.dart';
+import 'package:tfmoviles2/profile/presentation/views/payment_methods_view.dart';
 import 'package:tfmoviles2/service_locator.dart';
 import 'package:tfmoviles2/shared/domain/services/storage_service.dart';
 
@@ -12,9 +13,11 @@ class ProfileView extends StatefulWidget {
 }
 
 class _ProfileViewState extends State<ProfileView> {
+  String _userId = '';
   String _userName = 'Cargando...';
   String _userEmail = 'cargando@email.com';
   String _userPhone = 'No registrado';
+  String? _userPhotoUrl;
 
   @override
   void initState() {
@@ -26,9 +29,12 @@ class _ProfileViewState extends State<ProfileView> {
     final userData = await getIt<StorageService>().getUserData();
     if (mounted) {
       setState(() {
+        _userId = userData['id'] ?? '';
         _userName = userData['name'] ?? 'Usuario';
         _userEmail = userData['email'] ?? 'correo@noencontrado.com';
-        _userPhone = userData['phone'] ?? '+00 000 000 000';
+        final rawPhone = userData['phone'] ?? '';
+        _userPhone = rawPhone.isNotEmpty ? '+51 $rawPhone' : 'No registrado';
+        _userPhotoUrl = userData['photoUrl'];
       });
     }
   }
@@ -43,6 +49,115 @@ class _ProfileViewState extends State<ProfileView> {
         (route) => false,
       );
     }
+  }
+
+  void _showEditProfileModal() {
+    final nameController = TextEditingController(text: _userName);
+    // Quitamos el +51 para editar solo el número
+    final phoneController = TextEditingController(
+      text: _userPhone.startsWith('+51 ') ? _userPhone.replaceFirst('+51 ', '') : ''
+    );
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.background,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 20,
+            right: 20,
+            top: 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Editar Perfil',
+                style: TextStyle(
+                  color: AppColors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 24),
+              TextField(
+                controller: nameController,
+                style: const TextStyle(color: AppColors.white),
+                decoration: InputDecoration(
+                  labelText: 'Nombre completo',
+                  labelStyle: const TextStyle(color: AppColors.secondaryText),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: AppColors.secondaryText.withOpacity(0.5)),
+                  ),
+                  focusedBorder: const OutlineInputBorder(
+                    borderSide: BorderSide(color: AppColors.primaryButton),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: phoneController,
+                style: const TextStyle(color: AppColors.white),
+                keyboardType: TextInputType.phone,
+                decoration: InputDecoration(
+                  labelText: 'Teléfono',
+                  prefixText: '+51 ',
+                  prefixStyle: const TextStyle(color: AppColors.white),
+                  labelStyle: const TextStyle(color: AppColors.secondaryText),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: AppColors.secondaryText.withOpacity(0.5)),
+                  ),
+                  focusedBorder: const OutlineInputBorder(
+                    borderSide: BorderSide(color: AppColors.primaryButton),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryButton,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: () async {
+                    final newName = nameController.text.trim();
+                    final newPhone = phoneController.text.trim();
+
+                    if (newName.isNotEmpty) {
+                      await getIt<StorageService>().saveUserData(
+                        name: newName,
+                        phone: newPhone,
+                      );
+                      _loadUserData();
+                      if (context.mounted) Navigator.pop(context);
+                    }
+                  },
+                  child: const Text(
+                    'Guardar cambios',
+                    style: TextStyle(
+                      color: AppColors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 32),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -89,16 +204,17 @@ class _ProfileViewState extends State<ProfileView> {
                         color: AppColors.background,
                         shape: BoxShape.circle,
                         border: Border.all(color: AppColors.secondaryText.withOpacity(0.3)),
+                        image: _userPhotoUrl != null && _userPhotoUrl!.isNotEmpty
+                            ? DecorationImage(
+                                image: NetworkImage(_userPhotoUrl!),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
                       ),
                       alignment: Alignment.center,
-                      child: const Text(
-                        'IMAGEN',
-                        style: TextStyle(
-                          color: AppColors.secondaryText,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      child: _userPhotoUrl == null || _userPhotoUrl!.isEmpty
+                          ? const Icon(Icons.person, color: AppColors.secondaryText, size: 32)
+                          : null,
                     ),
                     const SizedBox(width: 16),
                     Expanded(
@@ -123,7 +239,7 @@ class _ProfileViewState extends State<ProfileView> {
                           ),
                           const SizedBox(height: 8),
                           GestureDetector(
-                            onTap: () {},
+                            onTap: _showEditProfileModal,
                             child: const Text(
                               'Editar perfil',
                               style: TextStyle(
@@ -225,17 +341,12 @@ class _ProfileViewState extends State<ProfileView> {
                         style: TextStyle(color: AppColors.white, fontSize: 16),
                       ),
                       trailing: const Icon(Icons.arrow_forward_ios, color: AppColors.secondaryText, size: 16),
-                      onTap: () {},
-                    ),
-                    const Divider(color: AppColors.secondaryText, height: 1, thickness: 0.2),
-                    ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-                      title: const Text(
-                        'Configuración',
-                        style: TextStyle(color: AppColors.white, fontSize: 16),
-                      ),
-                      trailing: const Icon(Icons.arrow_forward_ios, color: AppColors.secondaryText, size: 16),
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const PaymentMethodsView()),
+                        );
+                      },
                     ),
                   ],
                 ),

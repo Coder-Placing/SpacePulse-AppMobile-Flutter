@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../spaces/domain/repositories/space_repository.dart';
 import '../../../spaces/domain/models/space.dart';
+import '../../domain/models/iot_device.dart';
 import '../../application/bloc/IotBloc.dart';
 import '../../application/bloc/IotEvent.dart';
 import '../../application/bloc/IotState.dart';
 import '../../../service_locator.dart';
-import 'iot_device_detail_view.dart'; // Importamos la vista de detalles
+import 'iot_device_detail_view.dart';
 
 class IotView extends StatefulWidget {
   const IotView({Key? key}) : super(key: key);
@@ -38,6 +39,7 @@ class _IotViewState extends State<IotView> {
 
   void _showAddDeviceModal(BuildContext context) {
     final TextEditingController nameController = TextEditingController();
+    final TextEditingController serialController = TextEditingController();
     String selectedType = 'Temperature';
 
     showModalBottomSheet(
@@ -78,6 +80,18 @@ class _IotViewState extends State<IotView> {
                     style: const TextStyle(color: Colors.white),
                   ),
                   const SizedBox(height: 16),
+                  TextField(
+                    controller: serialController,
+                    decoration: const InputDecoration(
+                      labelText: 'Número de Serie (Serial Number)',
+                      labelStyle: TextStyle(color: Colors.grey),
+                      filled: true,
+                      fillColor: Color(0xFF2A2A2A),
+                      border: OutlineInputBorder(),
+                    ),
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                  const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
                     value: selectedType,
                     decoration: const InputDecoration(
@@ -92,7 +106,9 @@ class _IotViewState extends State<IotView> {
                     items: const [
                       DropdownMenuItem(value: 'Temperature', child: Text('Temperatura')),
                       DropdownMenuItem(value: 'Humidity', child: Text('Humedad')),
-                      DropdownMenuItem(value: 'Motion', child: Text('Movimiento')),
+                      DropdownMenuItem(value: 'Voltage', child: Text('Voltaje')),
+                      DropdownMenuItem(value: 'Load', child: Text('Peso')),
+                      DropdownMenuItem(value: 'air_quality', child: Text('Calidad de Aire')),
                     ],
                     onChanged: (value) {
                       if (value != null) {
@@ -109,11 +125,14 @@ class _IotViewState extends State<IotView> {
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
                     onPressed: () {
-                      if (nameController.text.isNotEmpty && _selectedSpace != null) {
+                      if (nameController.text.isNotEmpty && 
+                          serialController.text.isNotEmpty &&
+                          _selectedSpace != null) {
                         _iotBloc.add(AddDeviceEvent(
                           spaceId: _selectedSpace!.id,
                           name: nameController.text,
                           type: selectedType,
+                          serialNumber: serialController.text,
                         ));
                         Navigator.pop(bottomSheetContext);
                       }
@@ -125,6 +144,84 @@ class _IotViewState extends State<IotView> {
               ),
             );
           },
+        );
+      },
+    );
+  }
+
+  void _showEditDeviceModal(BuildContext context, IotDevice device) {
+    final TextEditingController nameController = TextEditingController(text: device.name);
+    final TextEditingController serialController = TextEditingController(text: device.serialNumber);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF1E1E1E),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (bottomSheetContext) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom,
+            left: 16,
+            right: 16,
+            top: 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Editar Dispositivo',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Nombre',
+                  labelStyle: TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: Color(0xFF2A2A2A),
+                  border: OutlineInputBorder(),
+                ),
+                style: const TextStyle(color: Colors.white),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: serialController,
+                decoration: const InputDecoration(
+                  labelText: 'Número de Serie',
+                  labelStyle: TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: Color(0xFF2A2A2A),
+                  border: OutlineInputBorder(),
+                ),
+                style: const TextStyle(color: Colors.white),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blueAccent,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                onPressed: () {
+                  if (nameController.text.isNotEmpty && serialController.text.isNotEmpty) {
+                    _iotBloc.add(UpdateDeviceEvent(
+                      deviceId: device.id,
+                      name: nameController.text,
+                      serialNumber: serialController.text,
+                      spaceId: _selectedSpace?.id,
+                    ));
+                    Navigator.pop(bottomSheetContext);
+                  }
+                },
+                child: const Text('Guardar Cambios', style: TextStyle(color: Colors.white, fontSize: 16)),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
         );
       },
     );
@@ -219,13 +316,22 @@ class _IotViewState extends State<IotView> {
                                 ),
                                 title: Text(device.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                                 subtitle: Text('Tipo: ${device.type}', style: const TextStyle(color: Colors.grey)),
-                                trailing: IconButton(
-                                  icon: const Icon(Icons.delete, color: Colors.redAccent),
-                                  onPressed: () {
-                                    if (_selectedSpace != null) {
-                                      _iotBloc.add(DeleteDeviceEvent(deviceId: device.id, spaceId: _selectedSpace!.id));
-                                    }
-                                  },
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.edit, color: Colors.blueAccent),
+                                      onPressed: () => _showEditDeviceModal(context, device),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete, color: Colors.redAccent),
+                                      onPressed: () {
+                                        if (_selectedSpace != null) {
+                                          _iotBloc.add(DeleteDeviceEvent(deviceId: device.id, spaceId: _selectedSpace!.id));
+                                        }
+                                      },
+                                    ),
+                                  ],
                                 ),
                                 onTap: () {
                                   Navigator.push(

@@ -25,7 +25,6 @@ class _IotDeviceDetailViewState extends State<IotDeviceDetailView> {
   @override
   void initState() {
     super.initState();
-    // Solicitamos una instancia nueva del BLoC para no cruzar estados con la vista principal
     _detailBloc = getIt<IotBloc>();
     _detailBloc.add(LoadTelemetryEvent(widget.deviceId));
   }
@@ -43,7 +42,15 @@ class _IotDeviceDetailViewState extends State<IotDeviceDetailView> {
       child: Scaffold(
         backgroundColor: const Color(0xFF121212),
         appBar: AppBar(
-          title: Text(widget.deviceName, style: const TextStyle(color: Colors.white)),
+          title: BlocBuilder<IotBloc, IotState>(
+            builder: (context, state) {
+              String title = widget.deviceName;
+              if (state is IotTelemetryLoaded && state.records.isNotEmpty) {
+                title = state.records.first.name;
+              }
+              return Text(title, style: const TextStyle(color: Colors.white));
+            },
+          ),
           backgroundColor: const Color(0xFF2C3E50),
           iconTheme: const IconThemeData(color: Colors.white),
         ),
@@ -68,13 +75,10 @@ class _IotDeviceDetailViewState extends State<IotDeviceDetailView> {
                 itemCount: records.length,
                 itemBuilder: (context, index) {
                   final record = records[index];
-
-                  // Formateo elegante de fecha y hora
                   final dateStr = "${record.timestamp.day.toString().padLeft(2, '0')}/${record.timestamp.month.toString().padLeft(2, '0')}/${record.timestamp.year}";
                   final timeStr = "${record.timestamp.hour.toString().padLeft(2, '0')}:${record.timestamp.minute.toString().padLeft(2, '0')}";
-
                   return Card(
-                    color: const Color(0xFF1E1E1E), // Fondo oscuro
+                    color: const Color(0xFF1E1E1E),
                     elevation: 8,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -89,7 +93,6 @@ class _IotDeviceDetailViewState extends State<IotDeviceDetailView> {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Fila superior: Nombre e Ícono de estado
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -101,10 +104,15 @@ class _IotDeviceDetailViewState extends State<IotDeviceDetailView> {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              Icon(
-                                record.isOn ? Icons.power_settings_new : Icons.power_off,
-                                color: record.isOn ? Colors.greenAccent : Colors.redAccent,
-                                size: 30,
+                              IconButton(
+                                icon: Icon(
+                                  record.isOn ? Icons.power_settings_new : Icons.power_off,
+                                  color: record.isOn ? Colors.greenAccent : Colors.redAccent,
+                                  size: 30,
+                                ),
+                                onPressed: () {
+                                  _detailBloc.add(ToggleDevicePowerEvent(widget.deviceId));
+                                },
                               ),
                             ],
                           ),
@@ -114,8 +122,6 @@ class _IotDeviceDetailViewState extends State<IotDeviceDetailView> {
                             style: const TextStyle(color: Colors.grey, fontSize: 14),
                           ),
                           const Divider(color: Colors.white24, height: 40, thickness: 1),
-
-                          // Valor Central
                           Center(
                             child: Column(
                               children: [
@@ -144,7 +150,6 @@ class _IotDeviceDetailViewState extends State<IotDeviceDetailView> {
                           ),
                           const Divider(color: Colors.white24, height: 40, thickness: 1),
 
-                          // Fila inferior: Umbrales y Fecha
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [

@@ -46,6 +46,7 @@ class _RegisterViewState extends State<RegisterView> {
       email: _emailController.text.trim(),
       phone: _phoneController.text.trim(),
       password: _passwordController.text.trim(),
+      photo: _profileImage?.path,
     );
 
     setState(() {
@@ -94,36 +95,6 @@ class _RegisterViewState extends State<RegisterView> {
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: Column(
               children: [
-                const SizedBox(height: 20),
-                Center(
-                  child: Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF2C313C),
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    padding: const EdgeInsets.all(12),
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        const Icon(
-                          Icons.home_outlined,
-                          size: 60,
-                          color: Colors.white,
-                        ),
-                        Positioned(
-                          bottom: 12,
-                          child: Container(
-                            height: 2,
-                            width: 50,
-                            color: Colors.orangeAccent,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
                 const SizedBox(height: 16),
                 const Text(
                   'SpacePulse',

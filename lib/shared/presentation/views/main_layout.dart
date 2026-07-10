@@ -2,10 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../spaces/presentation/views/spaces_view.dart';
 import '../../../home/presentation/views/home_view.dart';
 import '../../../notifications/presentation/views/notifications_view.dart';
-
-// 1. IMPORTAMOS NUESTRA VISTA DEFINITIVA DE IOT
 import '../../../iot/presentation/views/iot_view.dart';
-
 import '../../../profile/presentation/views/profile_view.dart';
 
 class MainLayout extends StatefulWidget {
@@ -16,16 +13,13 @@ class MainLayout extends StatefulWidget {
 }
 
 class _MainLayoutState extends State<MainLayout> {
-  int _currentIndex = 0; // Default to Home
+  int _currentIndex = 0;
 
   final List<Widget> _pages = [
     const HomeView(),
     const SpacesView(),
     const NotificationsView(),
-
-    // 2. COLOCAMOS EL IOTVIEW AQUÍ (En la posición de índice 3)
     const IotView(),
-
     const ProfileView(),
   ];
 
@@ -40,10 +34,10 @@ class _MainLayoutState extends State<MainLayout> {
             _currentIndex = index;
           });
         },
-        type: BottomNavigationBarType.fixed, // To show more than 3 items properly
-        backgroundColor: const Color(0xFF1E1E1E), // Mantiene tu tema oscuro en el menú
-        selectedItemColor: Colors.blueAccent, // Color del ícono cuando está seleccionado
-        unselectedItemColor: Colors.grey, // Color de los íconos inactivos
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: const Color(0xFF1E1E1E),
+        selectedItemColor: Colors.blueAccent,
+        unselectedItemColor: Colors.grey,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),

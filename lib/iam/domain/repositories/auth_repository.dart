@@ -7,5 +7,8 @@ abstract class AuthRepository {
     required String email,
     required String phone,
     required String password,
+    String? photo,
   });
+  Future<User?> getUserById(String id);
+  Future<bool> addPaymentMethod(String userId, Map<String, dynamic> paymentData);
 }

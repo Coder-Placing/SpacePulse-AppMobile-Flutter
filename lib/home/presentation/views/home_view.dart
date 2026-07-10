@@ -147,11 +147,6 @@ class _HomeViewState extends State<HomeView> {
                     ),
                   ],
                 ),
-                const CircleAvatar(
-                  radius: 24,
-                  backgroundColor: AppColors.cardBackground,
-                  child: Icon(Icons.person, color: AppColors.secondaryText, size: 30),
-                ),
               ],
             ),
             const SizedBox(height: 32),
